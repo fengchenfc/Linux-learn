@@ -347,6 +347,16 @@ setenforce 0			//关闭selinux（也要关闭防火墙）
 
 ### http协议
 
+支持浏览器访问
+
+```shell
+[root@web1 ~]# yum -y install httpd gitweb  安装软件包
+[root@web1 ~]# vim +10 /etc/gitweb.conf  进入配置文件的第10行删除注释即可，其中/var/lib/git路径必须是仓库的上级目录，如果不一致要修改
+[root@web1 ~]# systemctl  restart  httpd  启动网站服务
+关闭selinux与防火墙
+使用火狐访问http://192.168.2.100/git/    
+```
+
 
 
 
