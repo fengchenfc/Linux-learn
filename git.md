@@ -294,33 +294,56 @@ git push   //推送到git服务器，也不需要密码了
 
 ### git协议
 
-git协议访问支持无授权访问（只读）
+#### git协议访问支持无授权访问（只读）
 
 - 服务器安装git-daemon软件包
 
 ```shell
-
+yum -y install git-daemon  //安装git协议软件包
 ```
 
 - 服务器初始化仓库（必须在/var/lib/git/目录创建仓库）
 
 ```shell
-
+git init --bare /var/lib/git/project	
 ```
 
-- 服务器启动git服务
+- 修改配置文件，启动git服务
 
 ```shell
+[root@web1 ~]# cat /usr/lib/systemd/system/git@.service
+#仅查看即可
+[root@web1 ~]# systemctl  start  git.socket
 
+systemctl start git.socket  //开启服务
+setenforce 0			//关闭selinux（也要关闭防火墙）
 ```
 
 - 客户端使用git协议访问（只读）
 
 ```shell
-
+[root@web2 ~]#git  clone  git://192.168.2.100/abc  //使用git协议从新克隆
 ```
 
+#### git协议访问支持无授权访问（允许对仓库服务器读写）
 
+在修改配置文件时，需添加允许写入数据选项`--enable=receive-pack`
+
+```shell
+[root@web1 ~]# vim /usr/lib/systemd/system/git@.service  修改git服务的配置，在第7行末尾加--enable=receive-pack选项，允许对仓库服务器写入数据，否则是只读
+[root@web1 ~]# systemctl  restart  git.socket  //开启服务
+[root@web1 ~]# setenforce  0  //关闭selinux，(防火墙也关)
+[root@web1 ~]#chmod  -R  777  /var/lib/git/abc  //开放仓库权限
+[root@web2 ~]#rm -rf project   //删除原有仓库
+[root@web2 ~]#git  clone  git://192.168.2.100/abc  //使用git协议从新克隆
+[root@web2 ~]#cd abc  //进入仓库，可以正常使用仓库
+[root@web2 abc]# echo 123 > abc  //创建测试文件
+[root@web2 abc]# git add .   //提交到暂存区
+[root@web2 abc]# git commit -m "abc"  //提交到仓库
+[root@web2 project]# git push  //推送到远程服务器
+```
+
+-------
 
 ### http协议
 
