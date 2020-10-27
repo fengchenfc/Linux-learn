@@ -1,4 +1,4 @@
-# Ansible
+# Ansible(一)
 
 ## Ansible基础
 
@@ -611,5 +611,193 @@ replace用法
 #将node1主机中/etc/issue.net文件全文所有的Kernel替换为Ocean
 #regexp后面是需要替换的旧内容；replace后面是需要替换的新内容
 # 验证：到node1主机执行命令cat /etc/issue.net查看文件内容是否正确
+```
+
+-----
+
+### Ansible ad-hoc应用三
+
+#### 应用要求
+
+- 远程目标主机创建、删除系统账户；设置系统账户属性、修改账户密码
+- 为目标主机创建、删除yum源配置文件；远程目标主机安装、卸载软件包
+- 使用service模块管理远程主机的服务
+- 创建、删除逻辑卷
+
+#### 步骤
+
+##### 步骤一：user模块
+
+user模块可以实现Linux系统账户管理(ansible-doc user)
+
+###### 最基本的用户创建
+
+```shell
+[root@control ansible]# ansible test -m user -a "name=tuser1"
+#远程test组中的所有主机并创建系统账户tuser1，默认state的值为present，代表创建用户
+## 验证：到node1主机执行命令id  tuser1查看是否有该用户
+```
+
+![image-20201027093751256](E:\fc-learn\Linux-learn\image-20201027093751256.png)
+
+1. 控制端主机**ssh远程**node1，将**user.py**脚本拷贝到node1
+
+2. 在node1主机**执行./user.py**  name=tuser1
+
+   备注：相当于执行useradd tuser1（tuser1是useradd的参数，没有这个参数useradd不知道创建用户）
+
+3. 控制端退出ssh远程连接
+
+
+
+###### 进阶创建用户，指定信息（UID、组等）
+
+```shell
+[root@control ansible]# ansible test -m user -a \
+"name=tuser2 uid=1010 group=adm groups=daemon,root home=/home/tuser2"
+#创建账户并设置对应的账户属性，uid指定用户ID号，group指定用户属于哪个基本组
+#groups指定用户属于哪些附加组，home指定用户的家目录
+## 验证： 到node1主机执行命令id tuser2查看是否有该用户
+```
+
+
+
+###### 高级创建，指定用户密码并用hash加密
+
+```shell
+[root@control ansible]# ansible test -m user \
+-a "name=tuser1 password={{'abc'| password_hash('sha512')}}"
+#修改账户密码，用户名是tuser1，密码是abc，密码经过sha512加密
+```
+
+###### 删除用户
+
+```shell
+[root@control ansible]# ansible test -m user \
+-a "name=tuser1 state=absent"
+#删除账户tuser1，state=absent代表删除账户的意思，name指定要删除的用户名是什么
+#账户的家目录不会被删除，相当于执行userdel tuser1
+[root@control ansible]# ansible test -m user \
+-a "name=tuser2 state=absent remove=true"
+#删除tuser2账户同时删除家目录、邮箱，相当于执行userdel  -r  tuser2
+```
+
+##### 步骤二：yum_repository模块
+
+使用yum_repository可以创建或修改yum源配置文件
+
+（ansible-doc yum_repository）
+
+```shell
+[root@control ansible]# ansible test -m yum_repository \
+-a "name=myyum description=hello baseurl=ftp://192.168.4.254/centos gpgcheck=no"
+#新建一个yum源配置文件/etc/yum.repos.d/myyum.repo
+#yum源文件名为myyum，该文件的内容如下：
+[myyum]
+baseurl = ftp://192.168.4.254/centos
+gpgcheck = 0
+name = hello
+## 验证：到node1主机ls /etc/yum.repos.d/查看该目录下是否有新的yum文件
+
+[root@control ansible]# ansible test -m yum_repository \
+-a "name=myyum description=test baseurl=ftp://192.168.4.254/centos gpgcheck=yes gpgkey=…"
+#修改yum源文件内容
+
+[root@control ansible]# ansible test -m yum_repository -a "name=myyum state=absent"
+#删除yum源文件myyum
+```
+
+##### 步骤三：yum模块
+
+使用yum模块可以安装、卸载、升级软件包（ansible-doc yum）  
+
+state: present(安装)|absent(卸载)|latest(升级)。
+
+```shell
+[root@control ansible]# ansible test -m yum -a "name=unzip state=present"
+#安装unzip软件包，state默认为present，也可以不写
+## 验证：到node1主机执行命令rpm -q unzip查看是否有该软件
+
+[root@control ansible]# ansible test -m yum -a "name=unzip state=latest"
+#升级unzip软件包，软件名称可以是*，代表升级所有软件包
+
+[root@control ansible]# ansible test -m yum -a "name=unzip state=absent"
+#调用yum模块，卸载unzip软件包，state=absent代表卸载软件
+## 验证：到node1主机执行命令rpm -q unzip查看该软件是否已经被卸载
+```
+
+##### 步骤四: service模块（ansible-doc service）
+
+service为服务管理模块（启动、关闭、重启服务等）      
+
+state:started|stopped|restarted，     
+
+enabled:yes设置开机启动。
+
+```shell
+[root@control ansible]# ansible test -m yum -a "name=httpd"
+#调用yum模块，安装httpd软件包
+## 验证：到node1主机执行命令rpm -q httpd查看该软件是否被安装
+[root@control ansible]# ansible test -m service -a "name=httpd state=started"
+#调用service模块，启动httpd服务
+## 验证：到node1主机执行命令systemctl  status  httpd查看服务状态
+[root@control ansible]# ansible test -m service -a "name=httpd state=stopped"
+#调用service模块，关闭httpd服务
+## 验证：到node1主机执行命令systemctl  status  httpd查看服务状态
+[root@control ansible]# ansible test -m service -a "name=httpd state=restarted"
+#调用service模块，重启httpd服务
+[root@control ansible]# ansible test -m service -a "name=httpd enabled=yes"
+#调用service模块，设置httpd服务开机自启
+```
+
+##### 步骤五：逻辑卷相关模块
+
+（ansible-doc lvg、ansible-doc lvol）
+
+提示：做实验之前需要给对应的虚拟机添加额外磁盘，并创建磁盘2个分区
+
+提示：可以使用前面学习过的parted或fdisk命令给磁盘创建分区   
+
+提示：这里的磁盘名称仅供参考，不要照抄！！！     
+
+###### lvg模块
+
+创建、删除卷组(VG)，修改卷组大小，     
+
+state:present(创建)|absent(删除)。
+
+```shell
+ [root@control ansible]# ansible test -m yum -a "name=lvm2"
+#安装lvm2软件包，安装了lvm2软件后，才有pvcreate、vgcreate、lvcreate等命令
+[root@control ansible]# ansible test -m lvg -a "vg=myvg pvs=/dev/sdb1"
+#创建名称为myvg的卷组，该卷组由/dev/sdb1组成
+#注意：这里的磁盘名称要根据实际情况填写
+## 验证：到node1主机执行命令pvs和vgs查看是否有对应的PV和VG
+
+[root@control ansible]# ansible test -m lvg -a "vg=myvg pvs=/dev/sdb1,/dev/sdb2"
+#修改卷组大小，往卷组中添加一个设备/dev/sdb2
+```
+
+###### lvol模块
+
+创建、删除逻辑卷(LV)，修改逻辑卷大小，      
+
+state:present(创建)|absent(删除)。
+
+```shell
+[root@control ansible]# ansible test -m lvol -a "lv=mylv vg=myvg size=2G"
+#使用myvg这个卷组创建一个名称为mylv的逻辑卷，大小为2G
+## 验证：到node1主机执行命令lvs查看是否有对应的LV逻辑卷
+
+[root@control ansible]# ansible test -m lvol -a "lv=mylv vg=myvg size=4G"
+#修改LV逻辑卷大小
+
+[root@control ansible]# ansible test -m lvol -a "lv=mylv vg=myvg size=3G force=yes"
+#缩减LV逻辑卷大小
+
+[root@control ansible]# ansible test -m lvol -a "lv=mylv vg=myvg state=absent force=yes"
+#删除逻辑卷，force=yes是强制删除
+[root@control ansible]# ansible test -m lvg -a "vg=myvg state=absent"
+#删除卷组myvg
 ```
 
