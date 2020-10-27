@@ -116,3 +116,81 @@ done
 [root@control ansible]# ansible all -m command -a  "touch /test"     #测试效果
 ```
 
+##### 常见报错
+
+（有问题可以参考，没问题可以忽略）
+
+```shell
+node1 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: alice@node1: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).",
+    "unreachable": true
+}
+问题分析：
+英语词汇：Failed（失败），connect（连接），to（到），host（主机），via（通过）
+permission（权限），denied（被拒绝）
+Failed to connect to host via ssh alice@node1（通过ssh使用alice远程连接到主机失败）
+Permission denied（因为无法连接，所以报错说权限被拒绝）
+解决办法：手动ssh alice@主机名（如node1），看看是否可以实现免密码登录。
+          Ansible的原理是基于ssh远程管理，如果无法实现alice免密码登录，则实验会失败！
+        如何实现免密码登录，可以参考案例上面的命令，或者第一阶段相关知识。
+```
+
+##### 3.修改inventory主机清单配置文件（参考即可，不需要操作）
+
+如果个别主机的账户不同，该如何处理呢？
+
+如果有些主机需要使用密码远程呢？如果有些主机的SSH端口不是22呢？
+
+```shell
+[root@control ~]# cat  ~/ansible/inventory
+[test]                    
+node1           ansible_ssh_port=端口号       #自定义远程SSH端口
+[proxy]
+node2           ansible_ssh_user=用户名    #自定义远程连接的账户名
+[webserver]
+node[3:4]       ansible_ssh_pass=密码       #自定义远程连接的密码
+[database]
+node5
+[cluster:children]                
+webserver
+database
+```
+
+--------
+
+## Ansible Playbook
+
+### Playbook概述
+
+- Ansible ad-hoc可以通过命令行形式远程管理其他主机
+  - 适合执行一些**临时性简单任务**
+
+- Ansible Playbook中文名称叫剧本
+  - 将经常需要执行的任务写入一个文件(剧本)
+  - 剧本中可以包含多个任务
+  - 剧本写后，我们随时根据剧本，执行相关的任务命令
+  - playbook剧本要求按照**YAML格式**编写
+  - 适合执行周期性**经常执行的复杂任务**
+
+### YAML简介
+
+#### YAML是什么
+
+- YAML是一个可读性高、用来表达数据序列的格式语言
+- YAML：YAML Ain't a Markup Language
+- YAML以数据为中心，重点描述数据的关系和结构
+
+#### YAML的格式要求
+
+- "#"代表注释，一般第一行为三个横杠（---）
+- **键值（key/value）对使用":"表示，数组使用"-"表示，"-"后面有空格**
+- key和value之间
+- 使用":"分隔
+- ":"后面**必须有空格**
+- 一般缩进由两个或以上空格组成
+- 相同层级的缩进**必须对齐**，缩进代表层级关系
+- **全文不可以使用tab键**
+- 区分大小写
+- 扩展名为yml或者yaml
+- 跨行数据需要使用>或者|，其中|会保留换行符

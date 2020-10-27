@@ -6,6 +6,10 @@
 
 使用php语言写的网站，相匹配的服务为nginx
 
+#### 工作原理
+
+![image-20201027162322561](E:\fc-learn\Linux-learn\image-20201027162322561.png)
+
 #### java
 
 - 一种跨平台、面向对象的程序设计语言
@@ -495,5 +499,47 @@ suffix：日志后缀
 
 
 
+### 配置tomcat集群
 
+#### 1) 在192.168.4.5主机上配置Nginx调度器
+
+（具体安装步骤参考前面的章节）
+
+```shell
+[root@proxy ~]# vim  /usr/local/nginx/conf/nginx.conf
+http{
+	upstream toms {
+		server 192.168.2.100:8080;
+		server 192.168.2.200:8080;
+	}
+	server  {
+		listen 80;
+		server_name localhost;
+		location / {
+			proxy_pass  http://toms;
+		}
+	}
+}  
+```
+
+#### 2) 在192.168.2.100和192.168.2.200主机上配置Tomcat调度器
+
+以下以Web1为例：
+
+```
+[root@web1 ~]# yum -y install  java-1.8.0-openjdk				//安装JDK
+[root@web1 ~]# yum -y install java-1.8.0-openjdk-headless		//安装JDK
+[root@web1 ~]# tar -xzf  apache-tomcat-8.0.30.tar.gz
+[root@web1 ~]# mv apache-tomcat-8.0.30  /usr/local/tomcat 
+```
+
+#### 3）启动服务
+
+```
+[root@web1 ~]# /usr/local/tomcat/bin/startup.sh
+```
+
+#### 4) 客户端验证
+
+为了防止有数据缓存，可以使用真实主机的google-chrome访问代理服务器，输入Ctrl+F5刷新页面。
 

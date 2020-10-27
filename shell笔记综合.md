@@ -7,8 +7,6 @@
   - 负责向内核翻译及传达用户/程序的指令	
   - 相当于操作系统的"外壳"
 
-![夕 卜 围 应 用 程 序  叩 专 行 解 释 器  系 统 内 核  计 算 机 硬 件 ](file:///C:/Users/Administrator/AppData/Local/Packages/Microsoft.Office.OneNote_8wekyb3d8bbwe/TempState/msohtmlclip/clip_image001.png)
-
 ------
 
 
