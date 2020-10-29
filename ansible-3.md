@@ -156,6 +156,61 @@ Welcome to {{ansible_hostname}} on {{ ansible_eth0.ipv4.address }}.
 
 handlers任务在所有其他任务都执行后才执行。
 
+
+
+在剧本中tasks用来定义任务（一定会执行）
+
+handlers也可以定义任务（不一定执行）
+
+handlers任务要想执行必须要被别人触发才能执行。
+
+```shell
+实例草稿：
+---
+- hosts: test
+  tasks:
+    - 任务1
+      notify:任务5
+    - 任务2
+  handlers:
+    - 任务5
+    - 任务6
+```
+
+可以通过handlers定义一组任务，仅当某个任务触发(notify)handlers时才执行相应的任务，如果有多个notify触发执行handlers任务，也仅执行一次。
+
+​      
+
+仅当任务的执行状态为changed时handlers任务才执行，handlers任务在所有其他任务都执行后才执行。
+
+​      
+
+下面编写一个通过notify触发执行handlers任务的案例。
+
+```shell
+[root@control ansible]# vim ~/ansible/handlers.yml
+---
+- hosts: test
+  tasks:
+    - name: create directory.           #多次执行playbook该任务状态不再是changed
+      file:                               #调用file模块创建目录
+        path: /tmp/parents/subdir/      #需要创建的具体目录名称
+        state: directory                #state等于directory代表创建目录
+      notify: touch file                #notify后面名称必须和handlers中的任务名称一致           
+  handlers:                              #通过handlers再定义一组任务
+    - name: touch file                  #给任务写描述信息（任务的名字，名字可以任意）
+      file:                              #调用file模块创建文件
+        path: /tmp/parents/subdir/new.txt    #需要创建的文件名
+        state: touch                           #state等于touch代表创建文件
+
+#备注：仅当file模块执行成功，
+#并且状态为changed时才会通过notify触发执行handlers下面的任务，
+#所以多次执行该剧本时，handlers任务不会被重复执行,
+#notity后面的名称必须和handlers下面name定义的任务名称一致（名称可以任意）。
+```
+
+-----
+
 ### when条件判断
 
 when可以定义判断条件，条件为真时才执行某个任务
@@ -363,5 +418,151 @@ Confirm New Vault password:<确认新密码>
 [root@control ansible]# cat data.txt
 [root@control ansible]# ansible-vault decrypt --vault-id=pass.txt data.txt
 [root@control ansible]# cat data.txt
+```
+
+## Ansible Roles
+
+在实际生产环境中，为了实现不同的功能，我们会编写大量的playbook文件。
+
+而且，每个playbook还可能会调用其他文件（如变量文件），对于海量的、无规律的文件，管理起来非常痛苦！
+
+Ansible从1.2版本开始支持Role（角色），Role（角色）是管理ansible文件的一种规范（目录结构），Role（角色）会按照标准的规范，自动到特定的目录和文件中读取数据。
+
+如果我们创建了一个名称为user.example的Role（角色），则其标准的目录结构如下图-1所示。
+
+![img](E:\fc-learn\Linux-learn\image001.png)
+
+
+
+Roles目录结构中主要文件的作用是什么呢？
+
+- defualts/main.yml：定义变量的缺省值，优先级较低
+- files目录：存储静态文件的目录，如tar包、音乐、视频等
+- handlers/main.yml:定义handlers
+- meta/main.yml:写作者、版本等描述信息
+- README.md:整个角色(role)的描述信息
+- tasks/main.yml:定义任务的地方
+- templates目录：存放动态数据文件的地方（文件中包含了变量的模板文件）
+- vars/main.yml:定义变量，优先级高
+
+#### 步骤一：Role应用案例
+
+##### 1.创建Roles
+
+下面这个案例目的：编写一个包含变量的模板文件，编写任务调用template模块，将模板文件拷贝给被管理端主机。      
+
+ansible-galaxy命令可以创建、管理自己的roles
+
+```shell
+[root@control ansible]# mkdir ~/ansible/roles
+[root@control ansible]# ansible-galaxy init  ~/ansible/roles/issue
+#创建一个Role，该Role的目的是拷贝自己新建的一个模板文件到远程主机的/etc/issue
+[root@control ansible]# tree  ~/ansible/roles/issue/
+#查看目录结构，如果没有tree命令则需要使用yum安装该软件
+```
+
+##### 2.修改role文件
+
+定义名称为myfile.txt的模板文件
+
+（该文件包含变量,因此必须放置templates目录）
+
+```shell
+[root@control ansible]# vim ~/ansible/roles/issue/templates/myfile.txt
+This is the system {{ansible_hostname}}
+Today's date is:{{ansible_date_time.date}}
+Contact to {{ admin }}
+```
+
+自定义变量文件
+
+（前面调用了admin这个变量，这里需要定义admin变量并赋值）
+
+```shell
+[root@control ansible]# vim ~/ansible/roles/issue/vars/main.yml
+---
+# vars file for /root/ansible/roles/issue
+admin: yoyo@tedu.cn
+#变量名为admin，变量的值为yoyo@tedu.cn
+```
+
+文件准备好了，计算机不会自动将文件拷贝给被管理端主机！需要编写任务调用模块实现拷贝的功能。     
+
+修改任务文件，任务文件中不需要tasks关键词，Role的各个文件之间相互调用不需要写文件的路径。
+
+```shell
+[root@control ansible]# vim ~/ansible/roles/issue/tasks/main.yml
+---
+# tasks file for /root/ansible/roles/issue
+-  name: delever issue file
+   template:
+     src: myfile.txt
+     dest: /etc/issue
+#调用template模块将myfile.txt文件拷贝给被管理端主机.
+```
+
+##### 3.在playbook中调用role
+
+Role创建好了，role不会自己运行，需要编写一个剧本调用上面的role。  
+
+编写playbook剧本文件,通过roles关键词调用role。
+
+```shell
+[root@control ansible]# vim  ~/ansible/issue.yml
+---
+- hosts: test
+  roles:
+    - issue
+#   - role2              #支持加载多个role
+```
+
+修改ansible.cfg配置文件，定义roles目录。
+
+```shell
+[root@control ansible]# vim  ~/ansible/ansible.cfg 
+[defaults]
+inventory = ./inventory
+roles_path = ./roles                    #指定到哪个目录下找role
+remote_user = alice
+[privilege_escalation]
+become=True
+become_method=sudo
+become_user=root
+become_ask_pass=False
+```
+
+#### 步骤二：ansible-galaxy命令
+
+公共Roles仓库(https://galaxy.ansible.com)管理。
+
+```shell
+[root@control ansible]# ansible-galaxy  search 'httpd' 
+#联网搜索roles
+[root@control ansible]# ansible-galaxy info acandid.httpd 
+#查看roles基本信息
+[root@control ansible]# ansible-galaxy install acandid.httpd -p ~/ansible/roles/
+#下载roles到特定的目录，-p可以指定下载到哪个目录
+```
+
+使用ansible-galaxy install可以直接下载Role，也可以编写requirements.yml文件下载Role。
+
+```shell
+[root@control ansible]# vim ~/ansible/roles/requirements.yml
+#格式一：可以直接从Ansible Galaxy官网下载
+- src: acandid.httpd
+#格式二：可以从某个git服务器下载
+- src: http://gitlab.com/xxx/xxx.git
+  scm: git
+  version: 56e00a54
+  name: nginx-acme
+#格式三：可以指定位置下载tar包，支持http、https、file
+- src:  http://example.com/myrole.tar
+  name:  myrole
+
+[root@control ansible]# ansible-galaxy install \
+-r ~/ansible/roles/requirements.yml \
+-p roles
+# -r后面跟文件名,该文件中包含了需要下载哪些role以及他们的链接位置
+# -p 指定将下载的role保存到哪个目录
 ```
 
