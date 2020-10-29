@@ -195,6 +195,24 @@ database
 - 扩展名为yml或者yaml
 - 跨行数据需要使用>或者|，其中|会保留换行符
 
+
+
+\> 和|示例
+
+```shell
+abc:    >
+	123
+	456
+#abc=123456
+abc: |
+	123
+	456
+#abc="123
+456"
+```
+
+
+
 #### YAML示例展示
 
 ```shell
@@ -664,7 +682,7 @@ iname="dachui"
 #密码是前面定义好的ipass,管道给password_hash把密码加密.
 ```
 
-#### 4.单独定义个变量文件，在playbook中用vars_file调用该文件
+#### 4.单独定义个变量文件，在playbook中用vars_files调用该文件
 
 ```shell
 [root@control ansible]# vim ~/ansible/file_var.yml
