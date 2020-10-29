@@ -90,7 +90,8 @@
 nb
 ```
 
-3. 使用source命令，无需X权限，**不会开启解释器**
+3. 使用source命令，无需X权限
+4. **不会开启解释器**
 
 ```shell
 [root@svr7 opt]# source test01.sh

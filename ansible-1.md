@@ -12,7 +12,7 @@
 
 #### 功能及特点
 
-Ansilbe时一款**自动化运维**工具，基于python开发：
+Ansilbe是一款**自动化运维**工具，基于python开发：
 
 - 批量系统配置
 - 批量程序部署
@@ -801,3 +801,6 @@ state:present(创建)|absent(删除)。
 #删除卷组myvg
 ```
 
+## 附加思维导图
+
+![img](E:\fc-learn\Linux-learn\image010.png)
