@@ -70,6 +70,10 @@
 
 提供共享存储空间的存储区域
 
+![](E:\fc-learn\Linux-learn\Cluster\chat_img_465324_16040221087372.jpg)
+
+![](E:\fc-learn\Linux-learn\Cluster\chat_img_465324_16040221226066.jpg)
+
 ### LVS术语
 
 - Director Server:调度服务器
