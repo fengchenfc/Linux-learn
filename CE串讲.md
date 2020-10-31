@@ -232,3 +232,21 @@ ssue.j2 (自己弄)   dest
 
 ------------
 
+第八题第二种解法：
+
+[alice@control ansible]$ cat lvm.yml
+\- name: xxxx
+  hosts: all
+  tasks:
+    \- name: failed when VG not found
+      debug: msg="VG not found"
+      when: ('search' not in ansible_lvm.vgs)
+      failed_when: ('search' not in ansible_lvm.vgs)
+    \- name: lvcreate
+      block:
+        \- lvol: lv=mylv size=1000M vg=search force=yes
+      rescue:
+        \- debug: msg="insufficient free space"
+        \- lvol: lv=mylv size=500M vg=search force=yes
+    \- name: mkfs
+      filesystem: dev=/dev/search/mylv  fstype=ext4  force=yes
