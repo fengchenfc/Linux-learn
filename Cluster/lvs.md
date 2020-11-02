@@ -96,8 +96,20 @@
 ### LVS工作模式
 
 - NAT模式
+
+通过网络地址转换实现的虚拟服务器
+
+**大并发访问时，调度器的性能成为瓶颈**
+
 - DR模式
+
+直接使用路由技术实现虚拟服务器
+
+节点服务器需要配置VIP，注意MAC地址广播
+
 - TUN模式
+
+通过隧道方式实现虚拟服务器
 
 ![image-20201030100808748](E:\fc-learn\Linux-learn\Cluster\image-20201030100808748.png)
 
@@ -155,7 +167,7 @@ Prot LocalAddress:Port Scheduler Flags
 TCP  192.168.4.5:80 wrr
 ```
 
-##### 2.为集群添加哎若干real server
+##### 2.为集群添加若干real server
 
 ```shell
 [root@proxy ~]# ipvsadm -a -t 192.168.4.5:80 -r 192.168.2.100 
