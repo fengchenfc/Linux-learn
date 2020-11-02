@@ -2,11 +2,12 @@
 
 ## keepalived概述
 
-- 调度器出现单点故障，如何解决？
-  - keeplived实现了高可用集群
-  - keepalived最初是为LVS设计的
-    - 专门监控各服务器节点的状态
-- keepalived后来加入了VRRP功能，防止单点故障
+VRRP（原来是在路由上的开源的）
+linux（软路由）
+
+作者照抄了一遍VRRP代码，写在了电脑上
+
+然后就有了keepalived
 
 
 
