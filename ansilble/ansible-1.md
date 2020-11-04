@@ -152,6 +152,14 @@ inventory = ~/ansible/inventory
 #host_key_checking = False      #是否校验密钥（第一次ssh时是否提示yes/no）
 ```
 
+**!!注意！这里如果使用非root用户操作，需要添加下列配置信息作用户提权(见ansible-2）！!!**
+
+
+
+
+
+
+
 ##### 2) 修改主机清单文件
 
 ##### （清单文件名必须与主配置文件inventory定义的一致）。
@@ -277,7 +285,7 @@ Permission denied（因为无法连接，所以报错说权限被拒绝）
 
 > bash有哪些特性可以参考Shell课程第一天的PPT，如管道和重定向等功能，但是shell模块可以支持。
 
-不可以使用shell模块执行**交互命令**，如vim、tio等。
+不可以使用shell模块执行**交互命令**，如vim、top等。
 
 ```shell
 [root@control ansible]# ansible test -m command -a "ps | wc -l"      #报错
