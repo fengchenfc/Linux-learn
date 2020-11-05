@@ -224,6 +224,8 @@ listen  websrv-rewrite 0.0.0.0:80
 
 客户端配置与HAProxy相同网络的IP地址，并使用火狐浏览器访问http://192.168.4.5，测试调度器是否正常工作，客户端访问http://192.168.4.5:1080/stats测试状态监控页面是否正常。访问状态监控页的内容，参考图-5所示。
 
+![img](E:\fc-learn\Linux-learn\Cluster\image005.png)
+
 ### 查看服务器访问状态
 
 在nginx中，查看访问的状态信息等数据，还需要安装模块
