@@ -154,12 +154,6 @@ inventory = ~/ansible/inventory
 
 **!!注意！这里如果使用非root用户操作，需要添加下列配置信息作用户提权(见ansible-2）！!!**
 
-
-
-
-
-
-
 ##### 2) 修改主机清单文件
 
 ##### （清单文件名必须与主配置文件inventory定义的一致）。
@@ -213,7 +207,7 @@ Ansible ad-hoc是一种通过命令行批量管理的方式，命令基本格式
 
 ###### 1.查看主机列表
 
-```shell
+```bash
 [root@control ~]# cd  ~/ansible          #非常重要
 [root@control ansible]# ansible  all  --list-hosts           #查看所有主机列表
 ```
