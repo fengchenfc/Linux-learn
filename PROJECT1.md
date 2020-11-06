@@ -42,9 +42,9 @@ nfs:		192.168.2.31/24
 
 3.配好proxy上的nginx代理
 
+解压tar包，安装配套工具，
 
-
-roles里：
+roles里：安装nginx
 
 file：nginx安装包，（是否要有ceph安装源？还是等到时候装到nfs里呢？）
 
@@ -53,6 +53,16 @@ file：nginx安装包，（是否要有ceph安装源？还是等到时候装到n
 > nginx是不是应该用nginx用户，nologin解释器？
 >
 > nfs那块 做集群存储，需要做ntp时间同步！
+
+
+
+
+
+
+
+接下来我们就用with_item属性
+item相当于for循环里面的i
+with_items取值，但不支持通配符
 
 ---------
 
