@@ -26,6 +26,8 @@ Slave_SQL：执行本机relay-log文件里的SQL语句，实现与Master数据�
 
 ## 构建主从同步
 
+![img](E:\fc-learn\Linux-learn\RDBMS1\MySQL主从同步、主从同步模式.assets\LINUXNSD_V01RDBMS2DAY01_006.png)
+
 ### 构建思路
 
  配置主服务器
@@ -313,3 +315,16 @@ mysql>   grant  all  on  库.*  to  用户@'客户端地址'
 mysql> select   *   from   库.表;
 ```
 
+
+
+## 复制模式
+
+- 异步复制（Asynchronous replication）
+
+主服务器执行完一次事务后，立即将结果返给客户端，不关心从服务器是否已经同步数据；
+
+- 半同步复制（Semisynchronous replication）
+
+介于异步复制和全同步复制之间；
+
+主服务器在执行完一次事务后，等待至少一台从服务器同步数据完成，才将结果返回给客户端；
