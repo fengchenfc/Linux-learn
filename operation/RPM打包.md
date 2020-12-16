@@ -85,18 +85,21 @@ make install DESTDIR=%{buildroot}
 1. 安装依赖包
 
 ```shell
-
+[root@web1 ~]# yum -y install  gcc  pcre-devel openssl-devel
 ```
 
 2. rpmbuild创建RPM软件包
 
 ```shell
-
+[root@web1 ~]# rpmbuild -ba /root/rpmbuild/SPECS/nginx.spec
+[root@web1 ~]# ls /root/rpmbuild/RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm
 ```
 
 ### 步骤三：安装软件
 
 ```shell
-
+[root@web1 ~]# yum install /root/rpmbuild/RPMS/x86_64/nginx-1.12.2-10.x86_64.rpm 
+[root@web1 ~]# rpm -qa |grep nginx
+[root@web1 ~]# ls /usr/local/nginx/
 ```
 
